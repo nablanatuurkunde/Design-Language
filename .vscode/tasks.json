@@ -1,0 +1,16 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      // Live preview of the open scene file (Ctrl+Shift+B); re-renders on save. ManimGX needs Python 3.13+.
+      "label": "ManimGX: preview",
+      "type": "process",
+      "command": "C:\\Python314\\python.exe",
+      "args": ["-m", "manimgx", "preview", "${file}"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "isBackground": true,
+      "problemMatcher": [],
+      "group": { "kind": "build", "isDefault": true }
+    }
+  ]
+}
