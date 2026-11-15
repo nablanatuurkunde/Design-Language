@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nabla-design"
+dynamic = ["version"]
+description = "The design language of the Nabla physics videos: colours, type, circuit symbols, animations and brand moments for manimgx."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "manimgx==0.1.1",  # the engine every video renders with; a new version means a new nabla-design release
+    "numpy",
+    "pyyaml",
+]
+
+[tool.hatch.version]
+path = "nabla/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["nabla"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"custom_config.yml" = "nabla/custom_config.yml"  # style.py reads it from the package once installed

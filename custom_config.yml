@@ -1,0 +1,10 @@
+# Render settings for every Nabla video. nabla/style.py reads this file on import and applies it to
+# manimgx's config, so a scene never sets these itself.
+#
+# manimgx typesets text and formulas with Typst, not LaTeX: MathTex converts LaTeX math to Typst.
+# The "LaTeX template" is therefore a Typst preamble, set before every formula.
+
+resolution: [1920, 1080]   # pixels (16:9)
+fps: 60
+background_color: "#000000"
+math_preamble: ""          # Typst code before every formula, e.g. '#set text(font: "New Computer Modern Math")'
