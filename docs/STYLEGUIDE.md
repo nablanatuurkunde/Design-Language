@@ -33,7 +33,7 @@ grijs op zwart.
 | `C_LOSS` | rood | energie die verloren gaat als warmte |
 | `C_PROTON`, `C_NEUTRON` | rood, grijs | deeltjes in de kern |
 | `C_TEXT`, `C_WIRE`, `C_EDGE` | wit | tekst, draden, randen van 3D-modellen |
-| `C_MUTED`, `C_INSULATOR` | grijs `#808080` | bijzaken, paneelranden, isolatoren |
+| `C_MUTED`, `C_INSULATOR` | grijs `#808080` | bijzaken, isolatoren |
 | `C_BG` | zwart | achtergrond |
 
 `formula()` kleurt U, I, R, P, E en Q zelf. Geel en rood hebben elk meer dan één betekenis: laat de context (een
@@ -69,9 +69,9 @@ Getallen krijgen een decimale komma: `value("U", 6, "V")` geeft *U = 6,0 V*. In 
 |---|---|---|
 | `SW_SYMBOL` | 4 | schakelsymbolen, maatlatten, een draad die nadruk krijgt |
 | `SW_WIRE` | 3 | alle draden en de aansluitdraadjes van symbolen |
-| `SW_FRAME` | 3 | kaders om tekst, omtrek van getekende voorwerpen |
-| `SW_THIN` | 2 | paneelranden, randen van 3D-modellen, kleine instrumenten |
-| `SW_HEAVY` | 6 | de streep onder een titel, het kruis bij een kapotte lamp, het ene stuk waar de scène naar wijst |
+| `SW_FRAME` | 3 | omtrek van getekende voorwerpen |
+| `SW_THIN` | 2 | de witte rand van panelen en formulekaarten, randen van 3D-modellen, kleine instrumenten |
+| `SW_HEAVY` | 6 | het kruis bij een kapotte lamp, het ene stuk waar de scène naar wijst |
 
 ## Schakelsymbolen
 
@@ -115,6 +115,7 @@ verbergt ze vanzelf.
 | een getal verandert | de nieuwe regel neemt de plek van de oude in | `swap_value(oud, nieuw)` |
 | samenvatting | regels één voor één, het vlak met de eerste regel mee | `self.one_by_one()` |
 | een langere berekening | wit rekenbord schuift van rechts in, de figuur schuift naar links | `self.board_in/board_swap/board_out` |
+| één regel eruit lichten | een eigen stukje rekenbord: wit vlak, zwarte tekst, links een balk in `C_ACCENT` (let op) of `C_MUTED` (rustig) | `box(mob)`, toon de groep die het teruggeeft |
 | synchroon met de tekst | animatie van `T_NORMAL`, daarna stilstaan tot de zin klaar is | `self.do(d, …)` |
 
 ![formulekaart en samenvatting](img/formulekaart.png)
@@ -127,7 +128,8 @@ tellers en iets dat gelijkmatig moet doorlopen.
 
 ## Indeling
 
-Het beeld is 14,2 × 8. De titel staat linksboven (`title()`), met `MARGIN` (0,5) tot de rand. Panelen staan in een hoek
+Het beeld is 14,2 × 8. De titel staat linksboven (`title()`), met `MARGIN` (0,5) tot de rand. Panelen en formulekaarten
+hebben een donker vlak met een dunne witte rand en licht afgeronde hoeken (`FRAME_RADIUS`). Panelen staan in een hoek
 (`panel(…, corner=m.UR)`); een paneel onderaan schuift zelf boven de ondertitels. Staan schakeling en formules naast
 elkaar, gebruik dan `ZONE_CIRCUIT` (links) en `ZONE_FORMULAS` (rechts). Het rekenbord begint op `BOARD_LEFT_X`.
 Camerastanden: `CAM_TOP` (2D, recht van boven) en `CAM_TILTED` (3D, hoogte = spanning).
@@ -138,7 +140,8 @@ Camerastanden: `CAM_TOP` (2D, recht van boven) en `CAM_TILTED` (3D, hoogte = spa
 
 | Moment | Helper |
 |---|---|
-| intro: de vijf strepen groeien in, daarna het woordmerk | `play_intro(self)` |
+| intro: de achtergrondstippen groeien uit tot driehoekjes en de ∇ groeit daaruit op (kan dus ook na een korte inleiding); de ∇ staat stil, schuift naar rechts en "Nabla" schuift erachter vandaan; na een seconde schuift alles terug en krimpt de ∇ tot een van de driehoekjes van de achtergrond; uit de logobestanden in `nabla/brand/` (6,0 s). De achtergrondstippen worden zolang kleine ∇-driehoekjes (punt omlaag, zoals het logo) die als starre lichamen aan veren op het logo reageren: een schok bij het splitsen duwt ze weg en laat ze tollen (met een ring van licht tot voorbij de rand), het schuivende logo sleept ze mee, daarna veren ze terug met de punt weer omlaag | `play_intro(self)` |
+| overgang: een golf van kleine ∇'s rolt door de achtergrond van links naar rechts, schuin (30° met de klok mee gedraaid) (`T_SLOW`, 2 s) en neemt alles wat in beeld staat op in de achtergrond (niet de ondertitel): elk stukje valt langs zijn omtrek uiteen in kleine ∇'s die met de golf meereizen tot ze ∇'s van de achtergrond zijn; daarna is het beeld leeg. `wipe=False`: alleen de golf. Bijvoorbeeld vlak voor een hoofdstukkaart | `play_transition(self)` |
 | hoofdstukkaart tussen twee delen | `play_chapter_card(self, 3, "Stroom")` |
 | formulekaart in Binas-stijl: formule groot, daaronder symbool, betekenis en eenheid | `formula_card(tex, [("U", "spanning", "V"), …], "Wet van Ohm")` |
 | eindscherm met ruimte voor de eindschermelementen van YouTube (`T_END_SCREEN`, 20 s) | `play_end_screen(self)` |

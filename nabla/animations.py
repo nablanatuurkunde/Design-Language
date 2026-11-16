@@ -39,6 +39,8 @@ def point_at(mob, color, **kw):
 
 def swap_value(old, new, **kw):
     """Replace a line (of a panel or board) by a new one, left-aligned on the same spot."""
+    if getattr(old, "on_board", False):
+        on_board(new)
     return m.Transform(old, new.move_to(old, aligned_edge=m.LEFT), **kw)
 
 

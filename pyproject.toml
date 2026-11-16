@@ -11,6 +11,7 @@ requires-python = ">=3.12"
 dependencies = [
     "manimgx==0.1.1",  # the engine every video renders with; a new version means a new nabla-design release
     "numpy",
+    "pillow",  # the logo PNGs of the intro
     "pyyaml",
 ]
 

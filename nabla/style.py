@@ -55,14 +55,14 @@ QUANTITY_COLORS = {"U": C_VOLTAGE, "I": C_CURRENT, "R": C_RESISTANCE, "P": C_POW
 FONT = ""  # manimgx's default (New Computer Modern): the same on every machine
 FS_TITLE, FS_HEADING, FS_LABEL, FS_SUBTITLE, FS_SMALL = 48, 36, 28, 26, 22
 FS_FORMULA_KEY, FS_FORMULA, FS_FORMULA_STEP = 52, 44, 38  # key formula, formula, line of a calculation
-FS_BRAND = 96     # the word mark in the intro: nabla.branding only
 
 # ── Strokes ───────────────────────────────────────────────────────────────
 SW_SYMBOL = 4     # circuit symbols, rulers, emphasised wires
 SW_WIRE = 3       # every wire: diagrams, 3D circuits, meter leads
-SW_FRAME = 3      # boxes around text, outlines of drawn objects (meter cabinet, ...)
+SW_FRAME = 3      # outlines of drawn objects (meter cabinet, ...)
+BOX_BAR = 0.09    # the coloured bar on the left of a box(), in frame units
 SW_THIN = 2       # panel edges, 3D model edges, small instruments
-SW_HEAVY = 6      # title underline, the one stroke a scene points at, "broken" cross
+SW_HEAVY = 6      # the one stroke a scene points at, "broken" cross
 
 # ── Circuit symbols ───────────────────────────────────────────────────────
 SYMBOL_LENGTH = 1.2   # every symbol, leads included
@@ -105,6 +105,7 @@ SUBTITLE_BUFF, SUBTITLE_WRAP = 0.3, 64        # subtitle: distance to the bottom
 BOARD_LEFT_X, BOARD_TOP_Y = 0.9, 2.9          # calculation board: its left edge, top of its first line
 FIGURE_SHIFT, FIGURE_SCALE = 3.6, 0.85        # the figure beside the board: camera shift, zoom factor
 PANEL_OPACITY = 0.9
+FRAME_RADIUS = 0.08                           # panel / formula card: corner radius of the outline
 CAM_TOP = dict(phi=0, theta=-90 * m.DEGREES, focal_distance=400)    # 2D: straight from above, no perspective
 CAM_TILTED = dict(phi=62 * m.DEGREES, theta=-62 * m.DEGREES, focal_distance=20)  # 3D: height = voltage
 
@@ -124,10 +125,8 @@ def text(s, size=FS_LABEL, color=C_TEXT, **kw):
 
 
 def title(s):
-    """Title in the top-left corner, with a short C_ACCENT underline."""
-    t = text(s, FS_TITLE, weight="BOLD").to_corner(m.UL, buff=MARGIN)
-    line = m.Line(t.get_corner(m.DL), t.get_corner(m.DL) + 1.2 * m.RIGHT).set_stroke(C_ACCENT, SW_HEAVY)
-    return m.VGroup(t, line.shift(0.15 * m.DOWN))
+    """Title in the top-left corner."""
+    return text(s, FS_TITLE, weight="BOLD").to_corner(m.UL, buff=MARGIN)
 
 
 def label(s, target, direction=m.UP, size=FS_LABEL, color=C_TEXT):
@@ -135,8 +134,37 @@ def label(s, target, direction=m.UP, size=FS_LABEL, color=C_TEXT):
 
 
 def box(mob, color=C_ACCENT):
-    """Rounded frame around mob: C_ACCENT for "watch out", C_MUTED for a quiet frame."""
-    return m.SurroundingRectangle(mob, color=color, buff=0.2, corner_radius=0.12, stroke_width=SW_FRAME)
+    """mob on its own piece of white board: a white plate with square corners, mob in black on it (coloured
+    quantities keep their colour), and a bar on the left in `color`: C_ACCENT for "watch out", C_MUTED for a quiet
+    box. Returns VGroup(plate, bar, mob): show the group, not mob (mob is recoloured)."""
+    return m.VGroup(*board_plate(mob, color, 0.2), on_board(mob))
+
+
+def frame_plate(mob, buff=0.25):
+    """The plate of panel and formula card: dark (PANEL_OPACITY) with a thin white outline, slightly rounded
+    corners (FRAME_RADIUS). mob stays white."""
+    plate = m.SurroundingRectangle(mob, buff=buff, corner_radius=FRAME_RADIUS).set_stroke(C_TEXT, SW_THIN)
+    return plate.set_fill(C_BG, PANEL_OPACITY)
+
+
+def board_plate(mob, color=C_MUTED, buff=0.25):
+    """The plate of box: a piece of white board around mob, square corners, a bar of
+    `color` on the left. Returns VGroup(white, bar); put on_board(mob) on top."""
+    white = m.SurroundingRectangle(mob, buff=buff, corner_radius=0).set_stroke(width=0).set_fill(WHITE, 1)
+    white.stretch_to_fit_width(white.width + BOX_BAR, about_edge=m.RIGHT)  # the bar takes its width from the left margin
+    bar = m.Rectangle(width=BOX_BAR, height=white.height).set_stroke(width=0).set_fill(color, 1)
+    return m.VGroup(white, bar.align_to(white, m.LEFT).align_to(white, m.UP))
+
+
+def on_board(mob):
+    """For the white board: plain (white) text becomes black; coloured quantities keep their colour."""
+    for part in mob.get_family():
+        part.on_board = True  # swap_value: a line that replaces this one goes black too
+        if part.get_fill_opacity() > 0 and m.ManimColor(part.get_fill_color()) == m.ManimColor(C_TEXT):
+            part.set_fill(BLACK, family=False)
+        if part.get_stroke_width() > 0 and m.ManimColor(part.get_stroke_color()) == m.ManimColor(C_TEXT):
+            part.set_stroke(BLACK, family=False)
+    return mob
 
 
 def formula(tex, size=FS_FORMULA, **kw):

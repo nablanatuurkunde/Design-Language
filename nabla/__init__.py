@@ -6,7 +6,7 @@ animations.py  fixed ways to enter, leave and change; current arrows and electro
 branding.py    intro, chapter card, formula card, end screen
 scene.py       Lesson (the base of every video), subtitles, panels, the calculation board
 """
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 from .style import *
 from .circuits import *

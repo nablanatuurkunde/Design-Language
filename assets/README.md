@@ -6,7 +6,7 @@ Hier horen (nog aan te leveren):
 
 | Bestand | Wat | Gebruikt door |
 |---|---|---|
-| `logo/nabla-logo.svg` | het logo als vector (strepen + woordmerk) | `branding.stripes()`: nu nagetekend, vervangen door dit bestand |
+| `logo/nabla-logo.svg` | het logo als vector (strepen + woordmerk) | thumbnails (de intro gebruikt `nabla/brand/logo.png`) |
 | `logo/nabla-logo.png` | het logo, transparante achtergrond, minstens 2000 px breed | thumbnails, social |
 | `logo/nabla-logo-wit.png` | het logo in wit, voor op foto's | thumbnails |
 | `logo/nabla-icon.png` | vierkant icoon (∇), 800 × 800 | YouTube-kanaalfoto |

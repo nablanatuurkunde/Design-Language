@@ -46,13 +46,12 @@ def say(scene, s, duration=None):
 
 # ── Panels (fixed in frame) ────────────────────────────────────────────────
 def panel(*lines, corner=m.UL, size=FS_LABEL):
-    """Lines on an (almost) opaque plate with an edge, fixed in a corner: readable, also over a moving circuit.
-    A line may be a string or a mobject. panel[0] is the plate, panel[1] the lines, so they can appear apart."""
+    """Lines on an (almost) opaque plate with a white square outline (frame_plate), fixed in a corner: readable,
+    also over a moving circuit. A line may be a string or a mobject. panel[0] is the plate, panel[1] the lines, so
+    they can appear apart."""
     group = m.VGroup(*(text(s, size) if isinstance(s, str) else s for s in lines))
     group.arrange(m.DOWN, aligned_edge=m.LEFT, buff=0.25)
-    plate = m.SurroundingRectangle(group, buff=0.25, corner_radius=0.12).set_stroke(C_MUTED, SW_THIN)
-    plate.set_fill(C_BG, PANEL_OPACITY)
-    result = m.VGroup(plate, group).to_corner(corner, buff=MARGIN)  # plate first: the text lies on top
+    result = m.VGroup(frame_plate(group), group).to_corner(corner, buff=MARGIN)  # plate first: the text lies on top
     if corner[1] < 0:
         result.shift(ABOVE_SUBTITLES * m.UP)
     return result
@@ -65,16 +64,6 @@ def panel_parts(*lines, corner=m.UR):
 
 
 # ── Calculation board: a long calculation on the right, the figure on the left ──
-def on_board(mob):
-    """For the white board: plain (white) text becomes black; coloured quantities keep their colour."""
-    for part in mob.get_family():
-        if part.get_fill_opacity() > 0 and m.ManimColor(part.get_fill_color()) == m.ManimColor(C_TEXT):
-            part.set_fill(BLACK, family=False)
-        if part.get_stroke_width() > 0 and m.ManimColor(part.get_stroke_color()) == m.ManimColor(C_TEXT):
-            part.set_stroke(BLACK, family=False)
-    return mob
-
-
 def board(*lines):
     """A calculation for the right side of the frame: a white board from BOARD_LEFT_X to the right edge, with the
     lines in black on it. Returns VGroup(plate, lines), like panel. In with Lesson.board_in, out with board_out."""
@@ -99,30 +88,62 @@ def figure_left(cam, shift=FIGURE_SHIFT, smaller=FIGURE_SCALE):
 
 
 # ── Background ─────────────────────────────────────────────────────────────
-DOT = m.Dot(radius=1).get_points()[:, :2]  # a dot of radius 1, as points
+_Q = np.array([[1, 0], [1, 0.5523], [0.5523, 1], [0, 1]])  # a quarter circle as one cubic curve
+# a dot of radius 1, as points: four curves (m.Dot has eight, twice the work for a dot of a few pixels)
+DOT = np.concatenate([_Q @ np.array([[c, s], [-s, c]]) for c, s in ((1, 0), (0, 1), (-1, 0), (0, -1))])
 
 
-def dots_pattern(step=0.6, speed=0.12, bands=8):
+DOT_STEP, DOT_RADIUS, DOT_BANDS = 0.6, 0.03, 8
+
+
+def chain(shapes):
+    """Many closed outlines (n, k, 2) as the points of one: after each outline a straight bridge to the start of the
+    next, and at the end all bridges back again, so the bridges enclose nothing and only the outlines are filled.
+    manimgx does slow work per separate outline (np.allclose for each, every frame): a layer of hundreds of dots
+    costs far less as one."""
+    if len(shapes) < 2:
+        return shapes.reshape(-1, 2)
+    a, b = shapes[:-1, 0], shapes[1:, 0]
+    bridges = np.stack([a, a + (b - a) / 3, a + 2 * (b - a) / 3, b], axis=1)
+    return np.concatenate([np.concatenate([shapes[:-1], bridges], axis=1).reshape(-1, 2), shapes[-1],
+                           bridges[::-1, ::-1].reshape(-1, 2)])
+
+
+def dots_grid():
+    """The resting places of the background dots, in frame coordinates (a little past the frame on all sides)."""
+    nx, ny = int(18 / DOT_STEP) + 2, int(11 / DOT_STEP) + 2
+    return np.array([[(i - nx / 2) * DOT_STEP, (j - ny / 2) * DOT_STEP] for i in range(nx) for j in range(ny)])
+
+
+def dots_at(grid, t, speed=0.12):
+    """(places, brightness band) of the dots at time t: a slow diagonal drift and a soft wave of light."""
+    P = grid + (t * speed) % DOT_STEP  # drift; after one step the grid falls on itself
+    wave = 0.5 + 0.5 * np.sin(0.8 * (P[:, 0] + P[:, 1]) - 0.6 * t)
+    return P, np.minimum((wave * DOT_BANDS).astype(int), DOT_BANDS - 1)
+
+
+def dots_layers():
+    """One layer per brightness band."""
+    return [m.VMobject().set_fill(C_MUTED, 0.1 + 0.25 * (b + 0.5) / DOT_BANDS).set_stroke(width=0)
+            for b in range(DOT_BANDS)]
+
+
+def dots_pattern():
     """A grid of faint dots drifting slowly diagonally, with a soft wave of light through it (one layer per
     brightness). Returns (layers, shapes): shapes(t) gives each layer's points at time t, in frame coordinates."""
-    nx, ny = int(18 / step) + 2, int(11 / step) + 2
-    grid = np.array([[(i - nx / 2) * step, (j - ny / 2) * step] for i in range(nx) for j in range(ny)])
-    layers = m.VGroup(*(m.VMobject().set_fill(C_MUTED, 0.1 + 0.25 * (b + 0.5) / bands).set_stroke(width=0)
-                        for b in range(bands)))
+    grid = dots_grid()
 
     def shapes(t):
-        P = grid + (t * speed) % step  # drift; after one step the grid falls on itself
-        wave = 0.5 + 0.5 * np.sin(0.8 * (P[:, 0] + P[:, 1]) - 0.6 * t)
-        band = np.minimum((wave * bands).astype(int), bands - 1)
-        return [(P[band == b, None, :] + 0.03 * DOT[None]).reshape(-1, 2) for b in range(bands)]
-    return layers, shapes
+        P, band = dots_at(grid, t)
+        return [chain(P[band == b, None, :] + DOT_RADIUS * DOT[None]) for b in range(DOT_BANDS)]
+    return m.VGroup(*dots_layers()), shapes
 
 
 # ── The base of every video ────────────────────────────────────────────────
 class Lesson(m.ThreeDScene):
     def setup(self):
         super().setup()
-        self.background()  # every video the same quiet, moving background
+        self.dots = self.background()  # every video the same quiet, moving background
 
     def hud(self, *mobs):
         """Fix in frame (stays put whatever the camera does)."""
@@ -224,11 +245,15 @@ class Lesson(m.ThreeDScene):
         self.remove(old[1])
 
     def background(self, distance=0.35):
-        """Quiet moving background: faint dots drifting slowly (dots_pattern). Fixed layers always lie on top, so
-        the pattern lies in 3D far behind the scene (distance × the focal distance) and follows the camera: in
-        every camera state it fills exactly the frame, and it always faces the camera."""
-        layers, shapes = dots_pattern()
-        layers.t = 0.0
+        """Quiet moving background: faint dots drifting slowly (dots_pattern)."""
+        return self.backdrop(*dots_pattern(), distance=distance)
+
+    def backdrop(self, layers, shapes, distance=0.35, t=0.0):
+        """Add a moving pattern behind everything: shapes(t) gives each layer's points in frame coordinates.
+        Fixed layers always lie on top, so the pattern lies in 3D far behind the scene (distance × the focal
+        distance) and follows the camera: in every camera state it fills exactly the frame, and it always faces
+        the camera."""
+        layers.t = t  # shapes starts at this time
 
         def follow(g, dt):
             g.t += dt
