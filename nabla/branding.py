@@ -345,7 +345,7 @@ def play_transition(scene, duration=T_SLOW, wipe=True):
 
 # ── Chapter card ───────────────────────────────────────────────────────────
 def chapter_card(number, title, word="Hoofdstuk"):
-    words = m.VGroup(text(f"{word} {number}", FS_HEADING, C_MUTED), text(title, FS_TITLE, weight="BOLD"))
+    words = m.VGroup(text(f"{word} {number}", FS_HEADING, C_MUTED), heading(title))
     return words.arrange(m.DOWN, aligned_edge=m.LEFT, buff=0.25)
 
 
@@ -380,7 +380,7 @@ def formula_card(tex, legend, name=None):
 # ── End screen ─────────────────────────────────────────────────────────────
 def end_screen(thanks="Bedankt voor het kijken!", next_video="volgende video", subscribe="abonneren"):
     """Thanks, and outlines where YouTube's end-screen elements go (two videos, subscribe)."""
-    head = text(thanks, FS_TITLE, weight="BOLD")
+    head = heading(thanks)
     slots = m.VGroup(*(m.VGroup(r := m.Rectangle(width=4.4, height=4.4 * 9 / 16).set_stroke(C_MUTED, SW_THIN),
                                 text(next_video, FS_SMALL, C_MUTED).move_to(r)) for _ in range(2)),
                      m.VGroup(c := m.Circle(radius=1.0).set_stroke(C_MUTED, SW_THIN),

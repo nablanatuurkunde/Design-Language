@@ -52,7 +52,11 @@ LED_COLORS = (N_RED, N_ORANGE, N_YELLOW, N_GREEN, N_BLUE, WHITE)  # the exceptio
 QUANTITY_COLORS = {"U": C_VOLTAGE, "I": C_CURRENT, "R": C_RESISTANCE, "P": C_POWER, "E": C_ENERGY, "Q": C_CHARGE}
 
 # ── Type ──────────────────────────────────────────────────────────────────
-FONT = ""  # manimgx's default (New Computer Modern): the same on every machine
+# The website's fonts (github.com/nablanatuurkunde/Website), shipped in nabla/fonts so every machine renders the same.
+# Formulas stay in LaTeX (New Computer Modern), as KaTeX does on the site.
+FONT = "Geist"                       # all text
+FONT_DISPLAY = "Bricolage Grotesque"  # titles and headings, ExtraBold like the site's h1-h3
+FONT_PATHS = [str(Path(__file__).parent / "fonts")]
 FS_TITLE, FS_HEADING, FS_LABEL, FS_SUBTITLE, FS_SMALL = 48, 36, 28, 26, 22
 FS_FORMULA_KEY, FS_FORMULA, FS_FORMULA_STEP = 52, 44, 38  # key formula, formula, line of a calculation
 
@@ -121,12 +125,17 @@ MATH_PREAMBLE = CONFIG.get("math_preamble") or ""
 
 # ── Text and formulas ─────────────────────────────────────────────────────
 def text(s, size=FS_LABEL, color=C_TEXT, **kw):
-    return m.Text(s, font=FONT, font_size=size, color=color, **kw)
+    return m.Text(s, font=FONT, font_size=size, color=color, font_paths=FONT_PATHS, **kw)
+
+
+def heading(s, size=FS_TITLE, color=C_TEXT):
+    """Text in the display font: titles, chapter titles, the end screen's thanks."""
+    return m.Text(s, font=FONT_DISPLAY, weight="ULTRABOLD", font_size=size, color=color, font_paths=FONT_PATHS)
 
 
 def title(s):
     """Title in the top-left corner."""
-    return text(s, FS_TITLE, weight="BOLD").to_corner(m.UL, buff=MARGIN)
+    return heading(s).to_corner(m.UL, buff=MARGIN)
 
 
 def label(s, target, direction=m.UP, size=FS_LABEL, color=C_TEXT):

@@ -49,6 +49,10 @@ merkmomenten**: de intro, hoofdstukkaarten en het eindscherm. Die staan allemaal
 
 ![letters](img/letters.png)
 
+De letters zijn die van de website: **Geist** voor alle tekst (`text()`) en **Bricolage Grotesque ExtraBold** voor
+titels en koppen (`title()`, `heading()`). Ze zitten in `nabla/fonts/` (statische versies van de variabele fonts van
+de site; SIL Open Font License), dus elke computer rendert hetzelfde. Formules blijven LaTeX (New Computer Modern).
+
 | Naam | Grootte | Waarvoor |
 |---|---|---|
 | `FS_TITLE` | 48 | titel van een onderdeel (`title()`), hoofdstuktitel |
